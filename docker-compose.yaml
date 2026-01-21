@@ -1,0 +1,27 @@
+# nginx proxy address - http://172.17.0.1:8087
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "5m"
+    max-file: "1"
+
+services:
+  privatebin:
+    image: privatebin/nginx-fpm-alpine:latest
+    container_name: privatebin-app
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - privatebin
+    ports:
+      - "8087:8080"
+    environment:
+      TZ: ${TZ:-America/New_York}
+    volumes:
+      - ./rootfs/config/privatebin:/config
+      - ./rootfs/data/privatebin:/data
+
+networks:
+  privatebin:
+    external: false
