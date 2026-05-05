@@ -45,8 +45,8 @@ See `docker-compose.yaml` for complete list of configurable options.
 
 ## 📂 Volumes
 
-- `./rootfs/config/privatebin` - Data storage
-- `./rootfs/data/privatebin` - Data storage
+- `./volumes/config/privatebin` - Data storage
+- `./volumes/data/privatebin` - Data storage
 
 ## 🔍 Logging
 
