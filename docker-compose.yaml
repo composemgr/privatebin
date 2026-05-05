@@ -19,8 +19,8 @@ services:
     environment:
       TZ: ${TZ:-America/New_York}
     volumes:
-      - ./rootfs/config/privatebin:/config
-      - ./rootfs/data/privatebin:/data
+      - ./volumes/config/privatebin:/config
+      - ./volumes/data/privatebin:/data
 
 networks:
   privatebin:
