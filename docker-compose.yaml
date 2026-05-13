@@ -17,16 +17,40 @@ services:
     logging: *default-logging
     networks:
       - privatebin
+      - proxy
+      - cloudflare
     ports:
       - "172.17.0.1:8087:8080"
     environment:
       TZ: ${TZ:-America/New_York}
       PHP_TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: privatebin-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
     volumes:
       - ./volumes/config/privatebin:/srv/cfg
       - ./volumes/data/privatebin:/srv/data
+    labels:
+      - 'traefik.enable=true'
+      - 'cloudflare.enable=true'
+      - 'traefik.docker.network=proxy'
+      - 'cloudflare.service=http://privatebin-app:8080'
+      - 'cloudflare.hostname=privatebin.${CLOUDFLARE_ZONE_NAME:-}'
+      - 'traefik.http.routers.privatebin-app.entrypoints=http'
+      - 'traefik.http.routers.privatebin-app-secure.tls=true'
+      - 'traefik.http.routers.privatebin-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.middlewares.privatebin-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.privatebin-app.middlewares=privatebin-app-https-redirect'
+      - 'traefik.http.routers.privatebin-app-secure.entrypoints=https'
+      - 'traefik.http.routers.privatebin-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.routers.privatebin-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.privatebin-app-secure.service=privatebin-app'
+      - 'traefik.http.services.privatebin-app.loadbalancer.server.port=8080'
 
 networks:
   privatebin:
     name: privatebin
     external: false
+  proxy:
+    external: true
+  cloudflare:
+    external: true
