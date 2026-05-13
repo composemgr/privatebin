@@ -1,5 +1,6 @@
 # nginx proxy address - http://172.17.0.1:8087
 
+name: privatebin
 x-logging: &default-logging
   driver: json-file
   options:
@@ -9,19 +10,23 @@ x-logging: &default-logging
 services:
   privatebin:
     image: privatebin/nginx-fpm-alpine:latest
+    pull_policy: always
     container_name: privatebin-app
-    restart: unless-stopped
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
     logging: *default-logging
     networks:
       - privatebin
     ports:
-      - "8087:8080"
+      - "172.17.0.1:8087:8080"
     environment:
       TZ: ${TZ:-America/New_York}
+      PHP_TZ: ${TZ:-America/New_York}
     volumes:
-      - ./volumes/config/privatebin:/config
-      - ./volumes/data/privatebin:/data
+      - ./volumes/config/privatebin:/srv/cfg
+      - ./volumes/data/privatebin:/srv/data
 
 networks:
   privatebin:
+    name: privatebin
     external: false
