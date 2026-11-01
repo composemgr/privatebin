@@ -1,0 +1,40 @@
+name: privatebin
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+
+  privatebin:
+    image: privatebin/nginx-fpm-alpine:latest
+    container_name: privatebin-app
+    domainname: ${BASE_DOMAIN_NAME:-example.com}
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: privatebin-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+      PHP_TZ: ${TZ:-America/New_York}
+    volumes:
+      - './volumes/config/privatebin:/srv/cfg:z'
+      - './volumes/data/privatebin:/srv/data:z'
+    labels:
+      - 'cloudflare.enable=true'
+      - 'cloudflare.service=http://privatebin-app:8080'
+      - 'cloudflare.hostname=${BASE_HOST_NAME:-$HOSTNAME}'
+    networks:
+      - privatebin
+      - cloudflare
+
+networks:
+  privatebin:
+    name: privatebin
+    external: false
+  cloudflare:
+    name: cloudflare
+    external: true

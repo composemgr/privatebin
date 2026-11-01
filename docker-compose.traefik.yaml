@@ -1,0 +1,48 @@
+name: privatebin
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+
+  privatebin:
+    image: privatebin/nginx-fpm-alpine:latest
+    container_name: privatebin-app
+    domainname: ${BASE_DOMAIN_NAME:-example.com}
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: privatebin-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+      PHP_TZ: ${TZ:-America/New_York}
+    volumes:
+      - './volumes/config/privatebin:/srv/cfg:z'
+      - './volumes/data/privatebin:/srv/data:z'
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik'
+      - 'traefik.http.routers.privatebin-privatebin.entrypoints=http'
+      - 'traefik.http.routers.privatebin-privatebin.rule=Host(${BASE_HOST_NAME:-$HOSTNAME})'
+      - 'traefik.http.routers.privatebin-privatebin.middlewares=privatebin-privatebin-https-redirect'
+      - 'traefik.http.middlewares.privatebin-privatebin-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.privatebin-privatebin-secure.entrypoints=https'
+      - 'traefik.http.routers.privatebin-privatebin-secure.rule=Host(${BASE_HOST_NAME:-$HOSTNAME})'
+      - 'traefik.http.routers.privatebin-privatebin-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.privatebin-privatebin-secure.service=privatebin-privatebin'
+      - 'traefik.http.services.privatebin-privatebin.loadbalancer.server.port=8080'
+    networks:
+      - privatebin
+      - traefik
+
+networks:
+  privatebin:
+    name: privatebin
+    external: false
+  traefik:
+    name: traefik
+    external: true
